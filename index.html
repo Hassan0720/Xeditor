@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes">
+<title>Xeditor280 · Pro Web Editor</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+/* [Previous CSS styles same rahenge] */
+:root{
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --text:#1e1e2f;
+  --accent:#4f7cff;
+  --border:#e0e3ef;
+  --header-bg:rgba(255,255,255,0.8);
+  --shadow:0 8px 20px rgba(0,0,0,0.02);
+  --line-bg:#f8f9fe;
+}
+.dark{
+  --bg:#0f1117;
+  --card:#1e222e;
+  --text:#e5e9f0;
+  --accent:#6a8cff;
+  --border:#2f3545;
+  --header-bg:rgba(20,25,35,0.9);
+  --shadow:0 8px 20px rgba(0,0,0,0.4);
+  --line-bg:#252b38;
+}
+/* [Rest of CSS same as before...] */
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  background: var(--header-bg);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-img {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.custom-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.brand-name {
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+.hamburger-btn {
+  background: transparent;
+  border: none;
+  font-size: 26px;
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+}
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 260px;
+  height: 100vh;
+  background: var(--card);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border);
+  box-shadow: 4px 0 25px rgba(0,0,0,0.15);
+  z-index: 1000;
+  transition: left 0.25s ease;
+  padding: 24px 0;
+}
+.sidebar.open {
+  left: 0;
+}
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: 0 20px 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.sidebar-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.sidebar-links li {
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.95rem;
+  border-bottom: 1px dashed var(--border);
+  color: var(--text);
+  cursor: pointer;
+  transition: 0.15s;
+}
+.sidebar-links li i {
+  width: 22px;
+  color: var(--accent);
+}
+.sidebar-links li:hover {
+  background: var(--accent);
+  color: white;
+}
+.sidebar-links li:hover i {
+  color: white;
+}
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.2);
+  backdrop-filter: blur(3px);
+  z-index: 999;
+  display: none;
+}
+.overlay.show {
+  display: block;
+}
+.original-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.original-header button {
+  padding: 8px 12px;
+  border-radius: 40px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  flex: 1 0 auto;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+#tabs{
+  display:flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+  padding: 4px 4px 0;
+  gap: 4px;
+}
+.tab{
+  flex: 1;
+  padding: 10px 5px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 500;
+  border-radius: 20px 20px 0 0;
+}
+.tab.active{
+  background: var(--accent);
+  color: white;
+}
+main{
+  flex: 1;
+  position: relative;
+  min-height: 0;
+  background: var(--card);
+  margin: 8px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+#editorWrap{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  overflow: hidden;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+#lineNumbers{
+  width: 48px;
+  padding: 16px 4px 16px 8px;
+  text-align: right;
+  color: #88909f;
+  background: var(--line-bg);
+  border-right: 1px solid var(--border);
+  font-family: inherit;
+  overflow: hidden;
+  position: relative;
+  pointer-events: none;
+}
+#codeArea{
+  position: relative;
+  flex: 1;
+  overflow: auto;
+}
+#codeArea textarea {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  border: none;
+  background: var(--card);
+  color: var(--text);
+  resize: none;
+  outline: none;
+  caret-color: var(--accent);
+}
+iframe{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: none;
+  background: white;
+  border-radius: 24px;
+}
+#fileInput{display:none;}
+</style>
+</head>
+<body>
+
+<!-- app header -->
+<div class="app-header">
+  <div class="brand">
+    <div class="logo-img">
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%234f7cff'/%3E%3Ctext x='50' y='70' font-size='70' text-anchor='middle' fill='white' font-family='Arial'%3EX%3C/text%3E%3C/svg%3E" alt="Logo" class="custom-logo">
+    </div>
+    <span class="brand-name">Xeditor280</span>
+  </div>
+  <button class="hamburger-btn" id="hamburgerToggle"><i class="fas fa-bars"></i></button>
+</div>
+
+<!-- sidebar navigation -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-img">
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%234f7cff'/%3E%3Ctext x='50' y='70' font-size='70' text-anchor='middle' fill='white' font-family='Arial'%3EX%3C/text%3E%3C/svg%3E" alt="Logo" class="custom-logo">
+    </div>
+    <span style="margin-left: 10px;">Menu</span>
+  </div>
+  <ul class="sidebar-links">
+    <li onclick="window.location.href='about-editor.html'"><i class="fas fa-info-circle"></i> about editor</li>
+    <li onclick="window.location.href='other-apps.html'"><i class="fas fa-th-large"></i> other app</li>
+    <li onclick="window.location.href='about-developer.html'"><i class="fas fa-user-astronaut"></i> about developer</li>
+    <li onclick="window.location.href='privacy-policy.html'"><i class="fas fa-shield-alt"></i> privacy policy</li>
+    <li onclick="window.location.href='app-store.html'"><i class="fas fa-store"></i> my app store</li>
+  </ul>
+</aside>
+<div class="overlay" id="overlay"></div>
+
+<!-- header buttons -->
+<header class="original-header">
+  <button onclick="undo()">Undo</button>
+  <button onclick="redo()">Redo</button>
+  <button onclick="openFile()">Open</button>
+  <button onclick="saveCurrent()">Save</button>
+  <button onclick="clearCurrent()">Clear</button>
+  <button onclick="copyCode()">Copy</button>
+  <button onclick="toggleView()">Preview</button>
+  <button onclick="downloadZip()">ZIP</button>
+  <button onclick="toggleTheme()">Theme</button>
+</header>
+
+<input type="file" id="fileInput" accept=".html,.css,.js,.txt,.json">
+
+<div id="tabs">
+  <div class="tab active" onclick="switchTab('html',this)">HTML</div>
+  <div class="tab" onclick="switchTab('css',this)">CSS</div>
+  <div class="tab" onclick="switchTab('js',this)">JS</div>
+</div>
+
+<main>
+  <div id="editorWrap">
+    <div id="lineNumbers"></div>
+    <div id="codeArea">
+      <textarea id="editor" spellcheck="false"></textarea>
+    </div>
+  </div>
+  <iframe id="preview"></iframe>
+</main>
+
+<script>
+// Editor logic (same as before)
+const editor = document.getElementById("editor");
+const lines = document.getElementById("lineNumbers");
+const preview = document.getElementById("preview");
+const fileInput = document.getElementById("fileInput");
+const editorWrap = document.getElementById("editorWrap");
+
+let currentTab = "html";
+let showingPreview = false;
+const files = { html: "", css: "", js: "" };
+
+// Default samples
+files.html = `<!DOCTYPE html>
+<html>
+<head><title>My Page</title><link rel="stylesheet" href="style.css"></head>
+<body><h1>Hello, Xeditor280!</h1><script src="script.js"><\/script></body>
+</html>`;
+files.css = `body { font-family: system-ui; color: #333; } h1 { color: #4f7cff; }`;
+files.js = `console.log('Ready!');`;
+
+try {
+  const saved = JSON.parse(localStorage.getItem("project"));
+  if(saved) {
+    if(saved.html) files.html = saved.html;
+    if(saved.css) files.css = saved.css;
+    if(saved.js) files.js = saved.js;
+  }
+} catch{}
+
+editor.value = files[currentTab];
+
+function saveProject(){
+  localStorage.setItem("project", JSON.stringify(files));
+}
+
+function updateLines(){
+  const count = editor.value.split("\n").length;
+  let html = '';
+  for(let i=1; i<=count; i++) html += i + '<br>';
+  lines.innerHTML = html;
+}
+
+function syncScroll(){
+  lines.style.transform = `translateY(-${editor.scrollTop}px)`;
+}
+
+editor.addEventListener("input", ()=>{
+  files[currentTab]=editor.value;
+  saveProject();
+  updateLines();
+});
+
+editor.addEventListener("scroll", syncScroll);
+
+updateLines();
+
+function switchTab(tab, el){
+  files[currentTab]=editor.value;
+  currentTab=tab;
+  editor.value=files[tab]||"";
+  updateLines();
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  if(el) el.classList.add("active");
+  if(showingPreview) refreshPreview();
+  setTimeout(syncScroll, 20);
+}
+
+function openFile(){ fileInput.click(); }
+
+fileInput.onchange = e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    editor.value = r.result;
+    files[currentTab] = r.result;
+    saveProject();
+    updateLines();
+    if(showingPreview) refreshPreview();
+  };
+  r.readAsText(file);
+  fileInput.value = "";
+};
+
+function clearCurrent(){
+  if(!confirm("Clear this tab?")) return;
+  editor.value = "";
+  files[currentTab] = "";
+  saveProject();
+  updateLines();
+  if(showingPreview) refreshPreview();
+}
+
+function saveCurrent(){
+  let name = prompt("File name", currentTab==="html"?"index":currentTab==="css"?"style":"script");
+  if(!name) return;
+  const ext = currentTab==="html"?".html":currentTab==="css"?".css":".js";
+  if(!name.endsWith(ext)) name += ext;
+  const blob = new Blob([editor.value], {type:"text/plain"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+}
+
+function refreshPreview(){
+  if(showingPreview){
+    const jsContent = files.js.replace(/<\/script>/g, '<\\/script>');
+    preview.srcdoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${files.css}</style></head><body>${files.html}<script>${jsContent}<\/script></body></html>`;
+  }
+}
+
+function toggleView(){
+  showingPreview = !showingPreview;
+  if(showingPreview){
+    refreshPreview();
+    preview.style.display = "block";
+    editorWrap.style.display = "none";
+  } else {
+    preview.style.display = "none";
+    editorWrap.style.display = "flex";
+    editor.focus();
+    setTimeout(syncScroll, 50);
+  }
+}
+
+function copyCode(){
+  editor.select();
+  document.execCommand("copy");
+  editor.focus();
+}
+
+function undo(){ document.execCommand("undo"); }
+function redo(){ document.execCommand("redo"); }
+
+function toggleTheme(){
+  document.body.classList.toggle("dark");
+}
+
+function downloadZip(){
+  const zip = new JSZip();
+  zip.file("index.html", files.html || "<!DOCTYPE html>");
+  zip.file("style.css", files.css || "/* css */");
+  zip.file("script.js", files.js || "// js");
+  zip.generateAsync({type:"blob"}).then(content=>{
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(content);
+    a.download = "project.zip";
+    a.click();
+  });
+}
+
+editor.addEventListener("keydown", e => {
+  if(e.key === "Tab"){
+    e.preventDefault();
+    const s = editor.selectionStart;
+    const v = editor.value;
+    editor.value = v.substring(0,s) + "  " + v.substring(editor.selectionEnd);
+    editor.selectionStart = editor.selectionEnd = s+2;
+    files[currentTab] = editor.value;
+    saveProject();
+    updateLines();
+  }
+});
+
+// Sidebar functionality
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+const hamburgerBtn = document.getElementById('hamburgerToggle');
+
+function openSidebar() { sidebar.classList.add('open'); overlay.classList.add('show'); }
+function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('show'); }
+
+hamburgerBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+});
+
+overlay.addEventListener('click', () => {
+  closeSidebar();
+});
+
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
+});
+
+// Paste/cut fix
+editor.addEventListener('paste', () => setTimeout(() => { updateLines(); syncScroll(); }, 20));
+editor.addEventListener('cut', () => setTimeout(() => { updateLines(); syncScroll(); }, 20));
+</script>
+</body>
+</html>
