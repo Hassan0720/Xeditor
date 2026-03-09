@@ -6,6 +6,13 @@
 <title>Xeditor280 · Pro Web Editor</title>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+        
+       <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d6efd">
+ 
+ 
+ 
 <style>
 /* [Previous CSS styles same rahenge] */
 :root{
@@ -501,5 +508,21 @@ document.addEventListener('keydown', (e) => {
 editor.addEventListener('paste', () => setTimeout(() => { updateLines(); syncScroll(); }, 20));
 editor.addEventListener('cut', () => setTimeout(() => { updateLines(); syncScroll(); }, 20));
 </script>
+  
+
+        <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(function(registration) {
+            console.log('ServiceWorker registered successfully');
+          }, function(err) {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+      });
+    }
+  </script>
+  
+  
 </body>
 </html>
